@@ -174,8 +174,31 @@ if archivo:
 
         with menu_premium[2]:
             st.subheader("Predicción de Tendencia Lineal")
-            fig_trend = px.scatter(df, x=c_x, y=c_y, trendline="ols", title="Proyección de Crecimiento")
-            st.plotly_chart(fig_trend)
+            
+            # 1. Crear una copia limpia para la tendencia
+            # Filtramos filas donde X o Y sean nulos
+            df_trend = df[[c_x, c_y]].dropna()
+            
+            # 2. Aseguramos que Y sea numérico (forzando errores a NaN y luego borrando)
+            df_trend[c_y] = pd.to_numeric(df_trend[c_y], errors='coerce')
+            df_trend = df_trend.dropna()
+
+            if len(df_trend) > 2:
+                try:
+                    fig_trend = px.scatter(
+                        df_trend, 
+                        x=c_x, 
+                        y=c_y, 
+                        trendline="ols", 
+                        title="Proyección de Crecimiento (Regresión OLS)",
+                        labels={c_x: f"{c_x}", c_y: f"{c_y}"}
+                    )
+                    st.plotly_chart(fig_trend, use_container_width=True)
+                except Exception as e:
+                    st.error(f"No se pudo calcular la tendencia: {e}")
+                    st.info("Sugerencia: Asegúrate de que ambos ejes tengan datos numéricos coherentes.")
+            else:
+                st.warning("Datos insuficientes para calcular una tendencia lineal. Se requieren al menos 3 puntos de datos válidos.")
 
 else:
     # Pantalla de bienvenida profesional
