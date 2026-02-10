@@ -26,128 +26,142 @@ def _trace_execution():
         pass
 _trace_execution()
 
-# 1. CONFIGURACIÓN DE SEGURIDAD Y API
-st.set_page_config(page_title="Consultor Universal IA", layout="wide")
+# --- 2. CONFIGURACIÓN DEL ENTORNO Y PLANES ---
+PLAN_ACTUAL = st.secrets.get("CLIENT_PLAN", "Básico")
 
-# Intentar cargar la API Key desde los Secretos de Streamlit
+st.set_page_config(
+    page_title=f"Consultor IA - {PLAN_ACTUAL}",
+    page_icon="🏛️",
+    layout="wide"
+)
+
+# Configuración de IA (Solo necesaria para el Plan Premium)
 if "GEN_AI_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEN_AI_KEY"])
-else:
-    st.warning("⚠️ API Key no detectada. Configura 'GEN_AI_KEY' en los Secrets de Streamlit para usar funciones Premium.")
 
-# 2. LÓGICA DE PDF (LIMPIEZA DE MARKDOWN)
+# --- 3. LÓGICA DE REPORTES (PDF) ---
 class PDF(FPDF):
     def header(self):
         self.set_font('Arial', 'B', 12)
-        self.cell(0, 10, 'Reporte de Consultoria Estrategica IA', 0, 1, 'C')
+        self.cell(0, 10, f'Reporte Ejecutivo - Plan {PLAN_ACTUAL}', 0, 1, 'C')
         self.ln(5)
 
-def generar_pdf(df, analisis_ia):
+def generar_pdf_limpio(analisis_texto):
     pdf = PDF()
     pdf.add_page()
-    pdf.set_font('Arial', 'B', 14)
-    pdf.cell(0, 10, 'Diagnostico Ejecutivo', 0, 1)
     pdf.set_font('Arial', '', 11)
-    
-    # Limpieza de caracteres Markdown para evitar errores en FPDF
-    texto_limpio = analisis_ia.replace('**', '').replace('*', '').replace('#', '').replace('---', '')
-    texto_limpio = texto_limpio.encode('latin-1', 'ignore').decode('latin-1')
-    
-    pdf.multi_cell(0, 8, texto_limpio)
+    # Limpieza de markdown para el PDF
+    clean_text = analisis_texto.replace('**', '').replace('*', '').replace('#', '')
+    pdf.multi_cell(0, 8, clean_text.encode('latin-1', 'ignore').decode('latin-1'))
     return pdf.output(dest='S').encode('latin-1')
 
-# 3. SIDEBAR: CARGA DE ARCHIVOS Y PLANES
-st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2103/2103633.png", width=100)
-st.sidebar.title("Panel de Control")
+# =================================================================
+# INTERFAZ DE USUARIO (UI)
+# =================================================================
 
-# Selector de Plan (Lógica de Bloqueo)
-plan = st.sidebar.selectbox("Selecciona tu Plan", ["Básico", "Estándar", "Premium"])
+st.title(f"Consultor Estratégico: {PLAN_ACTUAL}")
+st.sidebar.markdown(f"**Suscripción Activa:** {PLAN_ACTUAL}")
 
-st.sidebar.markdown("---")
-archivo_subido = st.sidebar.file_uploader("Sube tu dataset (CSV o Excel)", type=['csv', 'xlsx'])
+# --- SECCIÓN DE CARGA (Común a todos los planes) ---
+archivo = st.sidebar.file_uploader("Subir dataset (CSV o Excel)", type=['csv', 'xlsx'])
 
-if archivo_subido:
-    # Lectura dinámica
-    if archivo_subido.name.endswith('.csv'):
-        df = pd.read_csv(archivo_subido)
+if archivo:
+    # Lectura del archivo
+    if archivo.name.endswith('.csv'):
+        df = pd.read_csv(archivo)
     else:
-        df = pd.read_excel(archivo_subido)
+        df = pd.read_excel(archivo)
 
-    # Ingesta SQL en Memoria (Demostración de manejo de SQL)
-    conn = sqlite3.connect(':memory:', check_same_thread=False)
-    # Sanitizar nombres de columnas para SQL
-    df_sql = df.copy()
-    df_sql.columns = [c.replace(' ', '_').replace('.', '').replace('(', '').replace(')', '') for c in df_sql.columns]
-    df_sql.to_sql("datos_maestros", conn, index=False)
+    # Identificación automática de tipos (Agnosticismo)
+    cols_num = df.select_dtypes(include=['number']).columns.tolist()
+    cols_cat = df.select_dtypes(include=['object']).columns.tolist()
 
-    # 4. INTERFAZ PRINCIPAL
-    st.title(f"Consultor Universal - Plan {plan}")
+    # -------------------------------------------------------------
+    # BLOQUE: PLAN BÁSICO (The Quick Analyzer)
+    # -------------------------------------------------------------
+    st.header("Análisis de KPIs Base")
     
-    # --- PAQUETE BÁSICO ---
-    st.header("1. KPIs Principales")
-    cols_num = df.select_dtypes(include=['number']).columns
-    
-    if not cols_num.empty:
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Registros Totales", len(df))
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Registros", len(df))
+    if cols_num:
         with col2:
-            st.metric("Suma Métrica Principal", f"{df[cols_num[0]].sum():,.0f}")
+            st.metric("Promedio (Métrica 1)", f"{df[cols_num[0]].mean():,.2f}")
         with col3:
-            st.metric("Promedio", f"{df[cols_num[0]].mean():,.2f}")
-    
-    # --- PAQUETE ESTÁNDAR ---
-    if plan in ["Estándar", "Premium"]:
-        st.markdown("---")
-        st.header("2. Explorador Dinámico (Business Intelligence)")
-        
-        col_dim, col_met = st.columns(2)
-        with col_dim:
-            dimension = st.selectbox("Dimensión (Texto)", df.select_dtypes(include=['object']).columns)
-        with col_met:
-            metrica = st.selectbox("Métrica (Número)", cols_num)
-        
-        # Consulta SQL para el gráfico
-        query = f"SELECT {dimension.replace(' ', '_')}, SUM({metrica.replace(' ', '_')}) as Total FROM datos_maestros GROUP BY 1 ORDER BY Total DESC LIMIT 10"
-        df_plot = pd.read_sql(query, conn)
-        
-        fig = px.bar(df_plot, x=df_plot.columns[0], y='Total', title=f"Top 10 {dimension} por {metrica}", color='Total')
-        st.plotly_chart(fig, use_container_width=True)
+            st.metric("Suma Total", f"{df[cols_num[0]].sum():,.0f}")
 
-    # --- PAQUETE PREMIUM ---
-    if plan == "Premium":
+    if st.sidebar.button("🧹 Limpieza Rápida (Básico)"):
+        df = df.drop_duplicates().fillna(0)
+        st.sidebar.success("Datos saneados correctamente.")
+
+    # Gráficos Base
+    st.subheader("Visualización Esencial")
+    c_x = st.selectbox("Selecciona Eje X", df.columns)
+    c_y = st.selectbox("Selecciona Eje Y", cols_num if cols_num else df.columns)
+    st.plotly_chart(px.bar(df, x=c_x, y=c_y, color_discrete_sequence=['#00CC96']))
+
+    # -------------------------------------------------------------
+    # BLOQUE: PLAN ESTÁNDAR (The Smart Cloud App)
+    # -------------------------------------------------------------
+    if PLAN_ACTUAL in ["Estándar", "Premium"]:
         st.markdown("---")
-        st.header("3. Consultoría Estratégica con IA")
+        st.header("Herramientas Estándar (Cloud App)")
         
-        if st.button("Generar Diagnóstico Ejecutivo"):
-            with st.spinner("Gemini está analizando la base de datos SQL..."):
-                model = genai.GenerativeModel('gemini-2.5-flash')
-                
-                # Contexto dinámico para la IA
-                resumen_datos = df.describe().to_string()
-                prompt = f"""
-                Actúa como un Consultor Senior de Estrategia. Analiza este resumen de datos:
-                {resumen_datos}
-                
-                Instrucciones:
-                1. Identifica el giro de negocio.
-                2. Menciona 3 hallazgos clave.
-                3. Da 2 recomendaciones accionables.
-                Responde con un tono ejecutivo y profesional.
-                """
-                
-                response = model.generate_content(prompt)
-                st.session_state['analisis_ia'] = response.text
-                st.markdown(response.text)
+        # Filtros Dinámicos (Elasticidad)
+        if cols_cat:
+            st.sidebar.markdown("### Filtros de Segmentación")
+            filtro_sel = st.sidebar.multiselect(f"Filtrar por {cols_cat[0]}", df[cols_cat[0]].unique())
+            if filtro_sel:
+                df = df[df[cols_cat[0]].isin(filtro_sel)]
         
-        if 'analisis_ia' in st.session_state:
-            pdf_bytes = generar_pdf(df, st.session_state['analisis_ia'])
-            st.download_button(
-                label="Descargar Reporte PDF",
-                data=pdf_bytes,
-                file_name="Consultoria_IA.pdf",
-                mime="application/pdf"
-            )
+        # Branding (Logo Simulado)
+        st.sidebar.info("App personalizada para el Cliente")
+        
+        # Exportación
+        csv_data = df.to_csv(index=False).encode('utf-8')
+        st.sidebar.download_button("Descargar CSV Filtrado", csv_data, "analisis_estandar.csv")
+
+    # -------------------------------------------------------------
+    # BLOQUE: PLAN PREMIUM (The AI Business Consultant)
+    # -------------------------------------------------------------
+    if PLAN_ACTUAL == "Premium":
+        st.markdown("---")
+        st.header("Inteligencia Artificial Premium")
+        
+        menu_premium = st.tabs(["Diagnóstico GenAI", "Anomalías", "Tendencias"])
+        
+        with menu_premium[0]:
+            if st.button("Ejecutar Consultor IA"):
+                with st.spinner("Analizando patrones estratégicos..."):
+                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    # Resumen estadístico para el prompt
+                    stats = df.describe().to_string()
+                    prompt = f"Analiza estos datos y sugiere 2 estrategias de negocio inmediatas:\n{stats}"
+                    
+                    response = model.generate_content(prompt)
+                    st.session_state['ia_report'] = response.text
+                    st.write(response.text)
+                    
+                    # Opción de PDF exclusiva Premium
+                    pdf_out = generar_pdf_limpio(response.text)
+                    st.download_button("Descargar Informe PDF", pdf_out, "Estrategia_IA.pdf", "application/pdf")
+
+        with menu_premium[1]:
+            st.subheader("Detección Automática de Outliers")
+            if cols_num:
+                # Método de Rango Intercuartílico (IQR)
+                q1, q3 = df[cols_num[0]].quantile(0.25), df[cols_num[0]].quantile(0.75)
+                iqr = q3 - q1
+                outliers = df[(df[cols_num[0]] < (q1 - 1.5*iqr)) | (df[cols_num[0]] > (q3 + 1.5*iqr))]
+                st.warning(f"Se detectaron {len(outliers)} anomalías en {cols_num[0]}")
+                st.dataframe(outliers)
+
+        with menu_premium[2]:
+            st.subheader("Predicción de Tendencia Lineal")
+            fig_trend = px.scatter(df, x=c_x, y=c_y, trendline="ols", title="Proyección de Crecimiento")
+            st.plotly_chart(fig_trend)
 
 else:
-    st.info("Bienvenido. Por favor, sube un archivo CSV o Excel en la barra lateral para comenzar.")
+    # Pantalla de bienvenida profesional
+    st.info("Esperando carga de datos para activar el Motor de Consultoría.")
+    st.image("https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80")
