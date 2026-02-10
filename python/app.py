@@ -101,7 +101,7 @@ if archivo_subido:
         
         if st.button("Generar Diagnóstico Ejecutivo"):
             with st.spinner("Gemini está analizando la base de datos SQL..."):
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                model = genai.GenerativeModel('gemini-2.5-flash')
                 
                 # Contexto dinámico para la IA
                 resumen_datos = df.describe().to_string()
