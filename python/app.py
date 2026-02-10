@@ -90,7 +90,7 @@ if archivo:
         with col3:
             st.metric("Suma Total", f"{df[cols_num[0]].sum():,.0f}")
 
-    if st.sidebar.button("🧹 Limpieza Rápida (Básico)"):
+    if st.sidebar.button("Limpieza Rápida (Básico)"):
         df = df.drop_duplicates().fillna(0)
         st.sidebar.success("Datos saneados correctamente.")
 

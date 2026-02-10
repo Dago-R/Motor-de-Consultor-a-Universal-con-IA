@@ -5,3 +5,5 @@ google-generativeai
 fpdf
 openpyxl
 requests
+statsmodels
+scipy
