@@ -2,50 +2,50 @@
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.25+-red.svg)](https://streamlit.io/)
-[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-1.5%20Flash-orange.svg)](https://ai.google.dev/)
-[![SQLite](https://img.shields.io/badge/SQLite-3.0-green.svg)](https://www.sqlite.org/)
+[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-2.5%20Flash-orange.svg)](https://ai.google.dev/)
+[![License: Propia](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 
 Este proyecto es una plataforma de **Analítica Prescriptiva** diseñada para transformar datos crudos en decisiones estratégicas sin intervención manual. A diferencia de los sistemas de BI tradicionales, este motor es **agnóstico al esquema**, lo que permite procesar cualquier dataset (ventas, inventarios, logística, RRHH) de forma automática.
 
 ---
 
-## El Problema: Rigidez en el Análisis de Datos
-En el flujo convencional de análisis, los desarrolladores y analistas enfrentan:
-* **Esquemas Rígidos:** Los scripts fallan si los nombres de las columnas cambian o si el dataset proviene de una fuente distinta.
-* **Dashboards Mudos:** Las gráficas muestran *qué* ocurrió, pero carecen de la interpretación profesional para explicar el *por qué*.
-* **Fricción de Ingesta:** El proceso de limpiar CSVs y cargarlos a una base de datos suele ser manual y propenso a errores.
+Este motor de **Business Intelligence con IA** ha evolucionado de un script local a una solución **SaaS (Software as a Service)** escalable. Diseñado para empresas que necesitan diagnósticos ejecutivos instantáneos sin configuraciones técnicas.
 
-## La Solución: Arquitectura Universal y Adaptativa
-Este sistema implementa una arquitectura de tres capas para garantizar flexibilidad total:
+## Nuevas Capacidades (v2.0)
+* **Ingesta Cloud-Native:** Eliminación de dependencia de archivos locales. Carga de archivos vía interfaz web.
+* **Motor SQL In-Memory:** Los datos se procesan en la memoria RAM del servidor mediante SQLite, garantizando velocidad y privacidad (nada se guarda en disco).
+* **Niveles de Servicio (Tiers):** Implementación de lógica de negocios para planes Básico, Estándar y Premium.
+* **Reportes Ejecutivos:** Generación de PDFs profesionales libres de formatos Markdown, listos para imprimir.
 
-### 1. Ingesta Universal (Data Engineering)
-El componente `ingesta_universal.py` actúa como una capa de abstracción:
-* **Normalización Dinámica:** Escanea la carpeta `/data`, detecta el CSV más reciente y sanitiza los nombres de las columnas para SQL automáticamente.
-* **Motor SQL:** Convierte datos planos en una base de datos relacional SQLite funcional en segundos.
+## Tecnologías Utilizadas
+* **Core:** Python 3.9+
+* **Engine de IA:** Google Gemini 2.5 Flash (Generative AI).
+* **Base de Datos:** SQLite (SQL queries para análisis dinámico).
+* **Visualización:** Plotly Express & Streamlit.
+* **Infraestructura:** Streamlit Cloud & GitHub.
 
-### 2. Dashboard Interactivo (Visualización)
-Desarrollado en `Streamlit`, la interfaz no depende de variables fijas:
-* **Interrogación del Esquema:** Detecta automáticamente qué columnas son métricas (números) y cuáles son dimensiones (texto).
-* **Explorador Multidimensional:** Permite al usuario cruzar cualquier variable del dataset de forma dinámica.
-
-### 3. Consultoría GenAI (Inteligencia Artificial)
-Integración nativa con **Gemini 1.5 Flash** para actuar como un economista senior:
-* **Deducción de Contexto:** La IA analiza el esquema y una muestra de los datos para inferir el giro de negocio.
-* **Diagnóstico Profesional:** Genera un análisis crítico sobre tendencias, anomalías y riesgos estratégicos.
+## Estructura de Oferta
+1.  **Plan Básico:** Dashboard de KPIs generales y estadísticas descriptivas.
+2.  **Plan Estándar:** Explorador de datos dinámico con filtros multidimensionales y gráficos SQL.
+3.  **Plan Premium:** Consultoría completa con IA, diagnóstico narrativo y descarga de reportes PDF.
 
 ---
 
-## Guía de Instalación
+## Licencia y Propiedad Intelectual
+Este software es de **Código Abierto para Inspección (Open-Source for Inspection)** pero de **Uso Restringido**. 
+* **Copyright © 2026 Dagoberto Rosales**. 
+* No se permite la reproducción, distribución o uso comercial del código sin autorización expresa. 
+* Para licencias comerciales o despliegues personalizados, contactar a: https://www.linkedin.com/in/dagoberto-rosales/.
 
-### 1. Requisitos Previos
-* Python 3.9 o superior.
-* Una API Key de [Google AI Studio](https://aistudio.google.com/).
+---
 
-### 2. Instalación
-```bash
-# Clonar el repositorio
-git clone [https://github.com/Dago-R/Motor-de-Consultor-a-Universal-con-IA.git)
-cd Motor-de-Consultor-a-Universal-con-IA
+## Protocolos de Seguridad y Auditoría
 
-# Instalar dependencias
-pip install -r requirements.txt
+Este software ha sido desarrollado bajo estándares de seguridad proactiva y control de integridad. Se han implementado los siguientes protocolos para proteger la propiedad intelectual del autor:
+
+* **Auditoría de Despliegue (Canary Tokens):** El código fuente integra "objetos de seguimiento" que notifican al autor sobre cualquier ejecución en servidores no autorizados o réplicas del repositorio.
+* **Monitoreo de IP y Hosting:** Cada ejecución del sistema registra la huella digital del entorno de hosting. Si se detecta un uso comercial fuera de la infraestructura oficial sin licencia, se activará un reporte automático de infracción de Copyright.
+* **Protección de Lógica de Negocio:** Las funciones críticas de IA están protegidas mediante variables de entorno (Secrets). El acceso al motor de Gemini 2.5 Flash está restringido exclusivamente a la instancia oficial controlada por el autor.
+* **Firma Digital de Código:** Cada versión estable cuenta con una marca de agua interna que identifica la procedencia del código fuente, permitiendo rastrear filtraciones o copias no autorizadas.
+
+> **Advertencia:** Cualquier intento de ingeniería inversa, redistribución o despliegue paralelo sin el consentimiento por escrito de **Dagobeeto Rosales** será sujeto a las acciones legales correspondientes bajo las leyes de propiedad intelectual internacionales.
