@@ -149,7 +149,7 @@ if archivo:
         with menu_premium[0]:
             if st.button("Ejecutar Consultor IA"):
                 with st.spinner("Analizando patrones estratégicos..."):
-                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    model = genai.GenerativeModel('gemini-2.5-flash')
                     # Resumen estadístico para el prompt
                     stats = df.describe().to_string()
                     prompt = f"Analiza estos datos y sugiere 2 estrategias de negocio inmediatas:\n{stats}"
