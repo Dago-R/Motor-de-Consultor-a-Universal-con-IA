@@ -71,6 +71,22 @@ if archivo:
         df = pd.read_csv(archivo)
     else:
         df = pd.read_excel(archivo)
+    # --- CURACIÓN DE COLUMNAS ---
+    # 1. Elimina columnas que sean completamente vacías (Unnamed)
+    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+
+    # 2. Asegura que los nombres sean únicos añadiendo un sufijo si hay repetidos
+    cols = []
+    count = {}
+    for col in df.columns:
+        if col in count:
+            count[col] += 1
+            cols.append(f"{col}_{count[col]}")
+        else:
+            count[col] = 0
+            cols.append(col)
+    df.columns = cols
+    # ---------------------------------------------------------
 
     # Identificación automática de tipos (Agnosticismo)
     cols_num = df.select_dtypes(include=['number']).columns.tolist()
