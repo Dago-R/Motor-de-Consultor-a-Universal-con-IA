@@ -14,9 +14,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = BASE_DIR / "database" / "consultor_universal.db"
 
 # 2. Configuración Gemini (Corregido a versión estable)
-GEN_AI_KEY = "TU_API_KEY" 
+GEN_AI_KEY = "AIzaSyAKqK6SfSRwGmBM78opWmsUzY3xkUYmJ_A" 
 genai.configure(api_key=GEN_AI_KEY)
-model = genai.GenerativeModel('MODELO_IA_QUE_MEJOR_FUNCIONE')
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 # 3. Clase PDF Necesaria
 class PDF(FPDF):
@@ -45,10 +45,13 @@ def cargar_dinamico():
 def generar_pdf_universal(df, analisis_ia):
     pdf = PDF()
     pdf.add_page()
+    
+    # 1. Título de los datos
     pdf.set_font('Arial', 'B', 14)
     pdf.cell(0, 10, '1. Muestra de Datos Analizados', 0, 1)
     pdf.ln(5)
     
+    # Tabla de datos (Primeras 5 columnas)
     cols_pdf = df.columns[:5].tolist()
     pdf.set_font('Arial', 'B', 10)
     col_width = 190 / len(cols_pdf)
@@ -62,13 +65,22 @@ def generar_pdf_universal(df, analisis_ia):
             pdf.cell(col_width, 10, str(row[col])[:20], 1)
         pdf.ln()
     
+    # 2. Diagnóstico de la IA (Limpieza de Markdown)
     pdf.ln(10)
     pdf.set_font('Arial', 'B', 14)
-    pdf.cell(0, 10, '2. Diagnostico Estrategico', 0, 1)
+    pdf.cell(0, 10, '2. Diagnostico Estrategico IA', 0, 1)
     pdf.set_font('Arial', '', 11)
     
-    texto_limpio = analisis_ia.encode('ascii', 'ignore').decode('ascii')
+    # --- LÓGICA DE LIMPIEZA ---
+    # Reemplazamos los símbolos de Markdown por nada o por saltos de línea limpios
+    texto_limpio = analisis_ia.replace('**', '').replace('*', '').replace('#', '').replace('---', '')
+    
+    # Eliminamos caracteres especiales que FPDF no soporta (emojis, etc.)
+    texto_limpio = texto_limpio.encode('latin-1', 'ignore').decode('latin-1')
+    
+    # Imprimir el texto limpio con saltos de línea automáticos
     pdf.multi_cell(0, 8, texto_limpio)
+    
     return pdf.output(dest='S')
 
 # --- LÓGICA DE INTERFAZ ---
