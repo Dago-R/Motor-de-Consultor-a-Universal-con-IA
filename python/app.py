@@ -95,26 +95,27 @@ if archivo:
     # -------------------------------------------------------------
     # BLOQUE: PLAN BÁSICO (The Quick Analyzer)
     # -------------------------------------------------------------
-    st.header("Análisis de KPIs Base")
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Registros", len(df))
-    if cols_num:
-        with col2:
-            st.metric("Promedio (Métrica 1)", f"{df[cols_num[0]].mean():,.2f}")
-        with col3:
-            st.metric("Suma Total", f"{df[cols_num[0]].sum():,.0f}")
+    if PLAN_ACTUAL in ["Básico", "Estándar", "Premium"]: 
+        st.header("Análisis de KPIs Base")
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Registros", len(df))
+        if cols_num:
+            with col2:
+                st.metric("Promedio (Métrica 1)", f"{df[cols_num[0]].mean():,.2f}")
+            with col3:
+                st.metric("Suma Total", f"{df[cols_num[0]].sum():,.0f}")
 
-    if st.sidebar.button("Limpieza Rápida (Básico)"):
-        df = df.drop_duplicates().fillna(0)
-        st.sidebar.success("Datos saneados correctamente.")
+        if st.sidebar.button("🧹 Limpieza Rápida"):
+            df = df.drop_duplicates().fillna(0)
+            st.sidebar.success("Datos saneados correctamente.")
 
-    # Gráficos Base
-    st.subheader("Visualización Esencial")
-    c_x = st.selectbox("Selecciona Eje X", df.columns)
-    c_y = st.selectbox("Selecciona Eje Y", cols_num if cols_num else df.columns)
-    st.plotly_chart(px.bar(df, x=c_x, y=c_y, color_discrete_sequence=['#00CC96']))
+        # Gráficos Base
+        st.subheader("Visualización Esencial")
+        c_x = st.selectbox("Selecciona Eje X", df.columns)
+        c_y = st.selectbox("Selecciona Eje Y", cols_num if cols_num else df.columns)
+        st.plotly_chart(px.bar(df, x=c_x, y=c_y, color_discrete_sequence=['#00CC96']))
 
     # -------------------------------------------------------------
     # BLOQUE: PLAN ESTÁNDAR (The Smart Cloud App)
