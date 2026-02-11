@@ -119,7 +119,7 @@ if archivo:
         with col3:
             st.metric("Suma Total", f"{df[cols_num[0]].sum():,.0f}")
 
-    if st.sidebar.button("Limpieza Rápida (Básico)"):
+    if st.sidebar.button("Limpieza Rápida"):
         df = df.drop_duplicates().fillna(0)
         st.sidebar.success("Datos saneados correctamente.")
 
@@ -136,7 +136,7 @@ if archivo:
         st.markdown("---")
         st.header("Herramientas de Exportación Profesional")
         
-        # Filtros Dinámicos (Ya lo tienes, mantenlo)
+        # Filtros Dinámicos
         if cols_cat:
             st.sidebar.markdown("### Filtros de Segmentación")
             filtro_sel = st.sidebar.multiselect(f"Filtrar por {cols_cat[0]}", df[cols_cat[0]].unique())
@@ -151,14 +151,14 @@ if archivo:
             # Exportación CSV (Datos crudos)
             csv_data = df.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label="📥 Descargar Dataset Filtrado (CSV)",
+                label="Descargar Dataset Filtrado (CSV)",
                 data=csv_data,
                 file_name=f"datos_{PLAN_ACTUAL.lower()}.csv",
                 mime="text/csv"
             )
 
         with col_down2:
-            # NUEVO: Exportación PDF (Reporte Ejecutivo)
+            # Exportación PDF (Reporte Ejecutivo)
             # Preparamos un diccionario con los datos clave que ya calculamos arriba
             resumen_datos = {
                 "Plan de Suscripción": PLAN_ACTUAL,
@@ -171,7 +171,7 @@ if archivo:
             pdf_ejecutivo = generar_pdf_ejecutivo(f"Resumen Ejecutivo - {PLAN_ACTUAL}", resumen_datos)
             
             st.download_button(
-                label="📄 Descargar Reporte Ejecutivo (PDF)",
+                label="Descargar Reporte Ejecutivo (PDF)",
                 data=pdf_ejecutivo,
                 file_name=f"reporte_ejecutivo_{PLAN_ACTUAL.lower()}.pdf",
                 mime="application/pdf"
@@ -182,13 +182,12 @@ if archivo:
     # -------------------------------------------------------------
     if PLAN_ACTUAL == "Premium":
         st.markdown("---")
-        st.header("🤖 Inteligencia Artificial & Análisis Avanzado")
+        st.header("Inteligencia Artificial & Análisis Avanzado")
         
-        # Mantenemos tus pestañas originales para una navegación profesional
         menu_premium = st.tabs(["Diagnóstico GenAI", "Detección de Anomalías", "Tendencias de Crecimiento"])
         
         with menu_premium[0]:
-            st.subheader("Consultoría Estratégica con Gemini 1.5")
+            st.subheader("Consultoría Estratégica con Gemini")
             if st.button("Ejecutar Consultor IA"):
                 with st.spinner("Analizando patrones estratégicos de su negocio..."):
                     try:
@@ -196,7 +195,7 @@ if archivo:
                         if "GEN_AI_KEY" not in st.secrets:
                             st.error("Error de configuración: API Key no detectada.")
                         else:
-                            model = genai.GenerativeModel('gemini-1.5-flash')
+                            model = genai.GenerativeModel('gemini-2.5-flash')
                             stats = df.describe().to_string()
                             prompt = f"Analiza estos datos y sugiere 3 estrategias de negocio inmediatas y 1 riesgo potencial:\n{stats}"
                             
@@ -207,7 +206,7 @@ if archivo:
                             
                             # Botón de PDF exclusivo dentro de la pestaña para gratificación instantánea
                             pdf_out = generar_pdf_limpio(f"INFORME PREMIUM DE ESTRATEGIA\n\n{response.text}")
-                            st.download_button("📄 Descargar Informe IA (PDF)", pdf_out, "Estrategia_Negocio.pdf", "application/pdf")
+                            st.download_button("Descargar Informe IA (PDF)", pdf_out, "Estrategia_Negocio.pdf", "application/pdf")
                     except Exception as e:
                         st.error(f"El servicio de IA no pudo procesar los datos: {e}")
                         st.info("Sugerencia: Verifique que su dataset tenga suficientes datos numéricos.")
@@ -226,10 +225,10 @@ if archivo:
                     outliers = df[(df[cols_num[0]] < limite_inferior) | (df[cols_num[0]] > limite_superior)]
                     
                     if not outliers.empty:
-                        st.warning(f"⚠️ Se detectaron {len(outliers)} registros que se desvían del comportamiento normal.")
+                        st.warning(f"Se detectaron {len(outliers)} registros que se desvían del comportamiento normal.")
                         st.dataframe(outliers, use_container_width=True)
                     else:
-                        st.success("✅ No se detectaron anomalías significativas en el dataset actual.")
+                        st.success("No se detectaron anomalías significativas en el dataset actual.")
                 except Exception as e:
                     st.error(f"Error al calcular anomalías: {e}")
             else:
