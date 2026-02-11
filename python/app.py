@@ -46,19 +46,26 @@ class PDF(FPDF):
         self.cell(0, 10, f'Reporte Ejecutivo - Plan {PLAN_ACTUAL}', 0, 1, 'C')
         self.ln(5)
 
+def generar_pdf_limpio(analisis_texto):
+    """Genera PDF para bloques largos de texto (IA)."""
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_font('Arial', '', 11)
+    clean_text = analisis_texto.replace('**', '').replace('*', '').replace('#', '')
+    pdf.multi_cell(0, 8, clean_text.encode('latin-1', 'ignore').decode('latin-1'))
+    return pdf.output(dest='S').encode('latin-1')
+
 def generar_pdf_ejecutivo(titulo, contenido_dict):
+    """Genera PDF para KPIs estructurados (Estándar)."""
     pdf = PDF()
     pdf.add_page()
     pdf.set_font('Arial', 'B', 16)
     pdf.cell(0, 10, titulo, 0, 1, 'L')
     pdf.ln(5)
-    
     pdf.set_font('Arial', '', 12)
     for clave, valor in contenido_dict.items():
-        # Limpieza básica para evitar errores de encoding
         texto_linea = f"{clave}: {valor}".encode('latin-1', 'ignore').decode('latin-1')
         pdf.multi_cell(0, 10, texto_linea)
-    
     return pdf.output(dest='S').encode('latin-1')
 
 # =================================================================
@@ -175,7 +182,7 @@ if archivo:
     # -------------------------------------------------------------
     if PLAN_ACTUAL == "Premium":
         st.markdown("---")
-        st.header("Inteligencia Artificial & Análisis Avanzado")
+        st.header("🤖 Inteligencia Artificial & Análisis Avanzado")
         
         # Mantenemos tus pestañas originales para una navegación profesional
         menu_premium = st.tabs(["Diagnóstico GenAI", "Detección de Anomalías", "Tendencias de Crecimiento"])
@@ -200,7 +207,7 @@ if archivo:
                             
                             # Botón de PDF exclusivo dentro de la pestaña para gratificación instantánea
                             pdf_out = generar_pdf_limpio(f"INFORME PREMIUM DE ESTRATEGIA\n\n{response.text}")
-                            st.download_button("Descargar Informe IA (PDF)", pdf_out, "Estrategia_Negocio.pdf", "application/pdf")
+                            st.download_button("📄 Descargar Informe IA (PDF)", pdf_out, "Estrategia_Negocio.pdf", "application/pdf")
                     except Exception as e:
                         st.error(f"El servicio de IA no pudo procesar los datos: {e}")
                         st.info("Sugerencia: Verifique que su dataset tenga suficientes datos numéricos.")
@@ -219,10 +226,10 @@ if archivo:
                     outliers = df[(df[cols_num[0]] < limite_inferior) | (df[cols_num[0]] > limite_superior)]
                     
                     if not outliers.empty:
-                        st.warning(f"Se detectaron {len(outliers)} registros que se desvían del comportamiento normal.")
+                        st.warning(f"⚠️ Se detectaron {len(outliers)} registros que se desvían del comportamiento normal.")
                         st.dataframe(outliers, use_container_width=True)
                     else:
-                        st.success("No se detectaron anomalías significativas en el dataset actual.")
+                        st.success("✅ No se detectaron anomalías significativas en el dataset actual.")
                 except Exception as e:
                     st.error(f"Error al calcular anomalías: {e}")
             else:
