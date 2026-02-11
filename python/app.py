@@ -46,13 +46,19 @@ class PDF(FPDF):
         self.cell(0, 10, f'Reporte Ejecutivo - Plan {PLAN_ACTUAL}', 0, 1, 'C')
         self.ln(5)
 
-def generar_pdf_limpio(analisis_texto):
+def generar_pdf_ejecutivo(titulo, contenido_dict):
     pdf = PDF()
     pdf.add_page()
-    pdf.set_font('Arial', '', 11)
-    # Limpieza de markdown para el PDF
-    clean_text = analisis_texto.replace('**', '').replace('*', '').replace('#', '')
-    pdf.multi_cell(0, 8, clean_text.encode('latin-1', 'ignore').decode('latin-1'))
+    pdf.set_font('Arial', 'B', 16)
+    pdf.cell(0, 10, titulo, 0, 1, 'L')
+    pdf.ln(5)
+    
+    pdf.set_font('Arial', '', 12)
+    for clave, valor in contenido_dict.items():
+        # Limpieza básica para evitar errores de encoding
+        texto_linea = f"{clave}: {valor}".encode('latin-1', 'ignore').decode('latin-1')
+        pdf.multi_cell(0, 10, texto_linea)
+    
     return pdf.output(dest='S').encode('latin-1')
 
 # =================================================================
@@ -121,84 +127,130 @@ if archivo:
     # -------------------------------------------------------------
     if PLAN_ACTUAL in ["Estándar", "Premium"]:
         st.markdown("---")
-        st.header("Herramientas Estándar (Cloud App)")
+        st.header("Herramientas de Exportación Profesional")
         
-        # Filtros Dinámicos (Elasticidad)
+        # Filtros Dinámicos (Ya lo tienes, mantenlo)
         if cols_cat:
             st.sidebar.markdown("### Filtros de Segmentación")
             filtro_sel = st.sidebar.multiselect(f"Filtrar por {cols_cat[0]}", df[cols_cat[0]].unique())
             if filtro_sel:
                 df = df[df[cols_cat[0]].isin(filtro_sel)]
         
-        # Branding (Logo Simulado)
         st.sidebar.info("App personalizada para el Cliente")
         
-        # Exportación
-        csv_data = df.to_csv(index=False).encode('utf-8')
-        st.sidebar.download_button("Descargar CSV Filtrado", csv_data, "analisis_estandar.csv")
+        col_down1, col_down2 = st.columns(2)
+        
+        with col_down1:
+            # Exportación CSV (Datos crudos)
+            csv_data = df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="📥 Descargar Dataset Filtrado (CSV)",
+                data=csv_data,
+                file_name=f"datos_{PLAN_ACTUAL.lower()}.csv",
+                mime="text/csv"
+            )
+
+        with col_down2:
+            # NUEVO: Exportación PDF (Reporte Ejecutivo)
+            # Preparamos un diccionario con los datos clave que ya calculamos arriba
+            resumen_datos = {
+                "Plan de Suscripción": PLAN_ACTUAL,
+                "Total de Registros": len(df),
+                "Métrica Principal (Promedio)": f"{df[cols_num[0]].mean():,.2f}" if cols_num else "N/A",
+                "Suma Acumulada": f"{df[cols_num[0]].sum():,.0f}" if cols_num else "N/A",
+                "Filtros Aplicados": "Sí" if (cols_cat and filtro_sel) else "Ninguno"
+            }
+            
+            pdf_ejecutivo = generar_pdf_ejecutivo(f"Resumen Ejecutivo - {PLAN_ACTUAL}", resumen_datos)
+            
+            st.download_button(
+                label="📄 Descargar Reporte Ejecutivo (PDF)",
+                data=pdf_ejecutivo,
+                file_name=f"reporte_ejecutivo_{PLAN_ACTUAL.lower()}.pdf",
+                mime="application/pdf"
+            )
 
     # -------------------------------------------------------------
     # BLOQUE: PLAN PREMIUM (The AI Business Consultant)
     # -------------------------------------------------------------
     if PLAN_ACTUAL == "Premium":
         st.markdown("---")
-        st.header("Inteligencia Artificial Premium")
+        st.header("Inteligencia Artificial & Análisis Avanzado")
         
-        menu_premium = st.tabs(["Diagnóstico GenAI", "Anomalías", "Tendencias"])
+        # Mantenemos tus pestañas originales para una navegación profesional
+        menu_premium = st.tabs(["Diagnóstico GenAI", "Detección de Anomalías", "Tendencias de Crecimiento"])
         
         with menu_premium[0]:
+            st.subheader("Consultoría Estratégica con Gemini 1.5")
             if st.button("Ejecutar Consultor IA"):
-                with st.spinner("Analizando patrones estratégicos..."):
-                    model = genai.GenerativeModel('gemini-2.5-flash')
-                    # Resumen estadístico para el prompt
-                    stats = df.describe().to_string()
-                    prompt = f"Analiza estos datos y sugiere 2 estrategias de negocio inmediatas:\n{stats}"
-                    
-                    response = model.generate_content(prompt)
-                    st.session_state['ia_report'] = response.text
-                    st.write(response.text)
-                    
-                    # Opción de PDF exclusiva Premium
-                    pdf_out = generar_pdf_limpio(response.text)
-                    st.download_button("Descargar Informe PDF", pdf_out, "Estrategia_IA.pdf", "application/pdf")
+                with st.spinner("Analizando patrones estratégicos de su negocio..."):
+                    try:
+                        # Validación de API Key
+                        if "GEN_AI_KEY" not in st.secrets:
+                            st.error("Error de configuración: API Key no detectada.")
+                        else:
+                            model = genai.GenerativeModel('gemini-1.5-flash')
+                            stats = df.describe().to_string()
+                            prompt = f"Analiza estos datos y sugiere 3 estrategias de negocio inmediatas y 1 riesgo potencial:\n{stats}"
+                            
+                            response = model.generate_content(prompt)
+                            st.session_state['ia_report'] = response.text
+                            st.success("Análisis estratégico generado con éxito.")
+                            st.markdown(response.text)
+                            
+                            # Botón de PDF exclusivo dentro de la pestaña para gratificación instantánea
+                            pdf_out = generar_pdf_limpio(f"INFORME PREMIUM DE ESTRATEGIA\n\n{response.text}")
+                            st.download_button("Descargar Informe IA (PDF)", pdf_out, "Estrategia_Negocio.pdf", "application/pdf")
+                    except Exception as e:
+                        st.error(f"El servicio de IA no pudo procesar los datos: {e}")
+                        st.info("Sugerencia: Verifique que su dataset tenga suficientes datos numéricos.")
 
         with menu_premium[1]:
-            st.subheader("Detección Automática de Outliers")
+            st.subheader("Detección de Fallos y Outliers")
             if cols_num:
-                # Método de Rango Intercuartílico (IQR)
-                q1, q3 = df[cols_num[0]].quantile(0.25), df[cols_num[0]].quantile(0.75)
-                iqr = q3 - q1
-                outliers = df[(df[cols_num[0]] < (q1 - 1.5*iqr)) | (df[cols_num[0]] > (q3 + 1.5*iqr))]
-                st.warning(f"Se detectaron {len(outliers)} anomalías en {cols_num[0]}")
-                st.dataframe(outliers)
+                try:
+                    # Robustez: Manejo de errores en cálculo estadístico
+                    q1 = df[cols_num[0]].quantile(0.25)
+                    q3 = df[cols_num[0]].quantile(0.75)
+                    iqr = q3 - q1
+                    limite_inferior = q1 - 1.5 * iqr
+                    limite_superior = q3 + 1.5 * iqr
+                    
+                    outliers = df[(df[cols_num[0]] < limite_inferior) | (df[cols_num[0]] > limite_superior)]
+                    
+                    if not outliers.empty:
+                        st.warning(f"Se detectaron {len(outliers)} registros que se desvían del comportamiento normal.")
+                        st.dataframe(outliers, use_container_width=True)
+                    else:
+                        st.success("No se detectaron anomalías significativas en el dataset actual.")
+                except Exception as e:
+                    st.error(f"Error al calcular anomalías: {e}")
+            else:
+                st.info("Esta función requiere al menos una columna numérica.")
 
         with menu_premium[2]:
-            st.subheader("Predicción de Tendencia Lineal")
-            
-            # 1. Crear una copia limpia para la tendencia
-            # Filtramos filas donde X o Y sean nulos
-            df_trend = df[[c_x, c_y]].dropna()
-            
-            # 2. Aseguramos que Y sea numérico (forzando errores a NaN y luego borrando)
-            df_trend[c_y] = pd.to_numeric(df_trend[c_y], errors='coerce')
-            df_trend = df_trend.dropna()
-
-            if len(df_trend) > 2:
+            st.subheader("Proyección de Tendencia Lineal")
+            # Manejo de errores riguroso para la regresión
+            if len(df) > 5 and cols_num:
                 try:
-                    fig_trend = px.scatter(
-                        df_trend, 
-                        x=c_x, 
-                        y=c_y, 
-                        trendline="ols", 
-                        title="Proyección de Crecimiento (Regresión OLS)",
-                        labels={c_x: f"{c_x}", c_y: f"{c_y}"}
-                    )
-                    st.plotly_chart(fig_trend, use_container_width=True)
+                    df_trend = df[[c_x, c_y]].dropna()
+                    df_trend[c_y] = pd.to_numeric(df_trend[c_y], errors='coerce')
+                    df_trend = df_trend.dropna()
+
+                    if len(df_trend) > 2:
+                        fig_trend = px.scatter(
+                            df_trend, x=c_x, y=c_y, 
+                            trendline="ols", 
+                            title="Proyección OLS (Tendencia de Crecimiento)",
+                            color_discrete_sequence=['#FF4B4B']
+                        )
+                        st.plotly_chart(fig_trend, use_container_width=True)
+                    else:
+                        st.warning("Puntos de datos insuficientes para una proyección confiable.")
                 except Exception as e:
-                    st.error(f"No se pudo calcular la tendencia: {e}")
-                    st.info("Sugerencia: Asegúrate de que ambos ejes tengan datos numéricos coherentes.")
+                    st.error("No se pudo generar la tendencia. Asegúrese de que el Eje Y sea una métrica numérica.")
             else:
-                st.warning("Datos insuficientes para calcular una tendencia lineal. Se requieren al menos 3 puntos de datos válidos.")
+                st.info("Se requiere un dataset más extenso para habilitar proyecciones estadísticas.")
 
 else:
     # Pantalla de bienvenida profesional
