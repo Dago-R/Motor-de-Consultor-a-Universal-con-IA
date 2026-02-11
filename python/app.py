@@ -46,19 +46,26 @@ class PDF(FPDF):
         self.cell(0, 10, f'Reporte Ejecutivo - Plan {PLAN_ACTUAL}', 0, 1, 'C')
         self.ln(5)
 
+def generar_pdf_limpio(analisis_texto):
+    """Genera PDF para bloques largos de texto (IA)."""
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_font('Arial', '', 11)
+    clean_text = analisis_texto.replace('**', '').replace('*', '').replace('#', '')
+    pdf.multi_cell(0, 8, clean_text.encode('latin-1', 'ignore').decode('latin-1'))
+    return pdf.output(dest='S').encode('latin-1')
+
 def generar_pdf_ejecutivo(titulo, contenido_dict):
+    """Genera PDF para KPIs estructurados (Estándar)."""
     pdf = PDF()
     pdf.add_page()
     pdf.set_font('Arial', 'B', 16)
     pdf.cell(0, 10, titulo, 0, 1, 'L')
     pdf.ln(5)
-    
     pdf.set_font('Arial', '', 12)
     for clave, valor in contenido_dict.items():
-        # Limpieza básica para evitar errores de encoding
         texto_linea = f"{clave}: {valor}".encode('latin-1', 'ignore').decode('latin-1')
         pdf.multi_cell(0, 10, texto_linea)
-    
     return pdf.output(dest='S').encode('latin-1')
 
 # =================================================================
